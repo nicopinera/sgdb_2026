@@ -6,14 +6,14 @@ select * from persona;
 select * from persona where apellido = 'piñera';
 
 -- Actualizar datos
-update persona set apellido = 'bustamante' where dni = 12345;
+update persona set apellido = 'bustamante' where dni = 1;
 
 -- Eliminar datos
-delete from persona where dni = 134523421;
+delete from persona where dni = 2;
 
 -- Insertar datos
-insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (44195541,'nicolas','piñera','3516871744','nicoElCapto@gmail.com','miCasa');
-insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (123,'juan','piñera','3516871744','nicoElCapto@gmail.com','miCasa');
-insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (324,'juan','piñera','3516871744','nicoElCapto@gmail.com','miCasa');
-insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (12345,'juan','battigane','3516871744','nicoElCapto@gmail.com','miCasa');
-insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (134523421,'juan','battigane','3516871744','nicoElCapto@gmail.com','miCasa');
+insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (1,'nicolas','piñera','1','nicoElCapto@gmail.com','miCasa');
+insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (2,'juan','piñera','2','nicoElCapto@gmail.com','miCasa');
+insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (3,'juan','piñera','3','nicoElCapto@gmail.com','miCasa');
+insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (4,'juan','battigane','4','nicoElCapto@gmail.com','miCasa');
+insert into persona (dni,nombre,apellido,telefono,email,domicilioActual) values (5,'juan','battigane','5','nicoElCapto@gmail.com','miCasa');
