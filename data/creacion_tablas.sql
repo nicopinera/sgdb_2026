@@ -1,9 +1,22 @@
 -- Creacion Esquema/base de datos
 -- create schema tp2;
 
+drop table if exists historialCompra;
+drop table if exists couta;
+drop table if exists infoCuotas;
+drop table if exists historialVenta;
+drop table if exists historialGrupo;
+drop table if exists rifa;
+drop table if exists comprador;
+drop table if exists afiliado;
+drop table if exists grupo;
+drop table if exists sorteo;
+drop table if exists persona;
+
+
 -- Creacion tabla personas
-create table IF NOT EXISTS persona (
-	dni INT NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS persona (
+    dni INT NOT NULL PRIMARY KEY,
     nombre VARCHAR(30) NOT NULL,
     apellido VARCHAR(30) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
@@ -12,117 +25,117 @@ create table IF NOT EXISTS persona (
 );
 
 -- Creacion tabla Sorteo
-create table IF NOT EXISTS sorteo (
-	codSorteo int not null auto_increment primary key,
-    fechaInicio datetime not null,
-    fechaFin datetime not null
+CREATE TABLE IF NOT EXISTS sorteo (
+    codSorteo INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    fechaInicio DATETIME NOT NULL,
+    fechaFin DATETIME NOT NULL
 );
 
 -- Creacion tabla Grupo
-create table IF NOT EXISTS grupo(
-	idGrupo int not null auto_increment primary key,
-    nombreGrupo varchar(45) not null,
-    umbralRifaVendida int not null
+CREATE TABLE IF NOT EXISTS grupo (
+    idGrupo INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nombreGrupo VARCHAR(45) NOT NULL,
+    umbralRifaVendida INT NOT NULL
 );
 
 -- Creacion tabla afiliado
-create table IF NOT EXISTS afiliado(
-	nroAfiliado INT NOT NULL PRIMARY KEY auto_increment,
+CREATE TABLE IF NOT EXISTS afiliado (
+    nroAfiliado INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     dni INT NOT NULL,
     domicilioProcedencia VARCHAR(60),
-    fechaIngreso datetime,
+    fechaIngreso DATETIME,
     anioCursando YEAR,
-    estadoCivil enum('CASADO','SOLTERO','DIVORSIADO'),
+    estadoCivil ENUM('CASADO', 'SOLTERO', 'DIVORSIADO'),
     cantRifas INT NOT NULL,
-    FOREIGN  KEY (dni) REFERENCES persona(dni)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION
+    FOREIGN KEY (dni)
+        REFERENCES persona (dni)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla comprador
-create table IF NOT EXISTS comprador(
-	idComprador INT NOT NULL primary KEY auto_increment,
-    dni int not null,
-    foreign key (dni) references persona(dni)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS comprador (
+    idComprador INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    dni INT NOT NULL,
+    FOREIGN KEY (dni)
+        REFERENCES persona (dni)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla Rifa
-create table IF NOT EXISTS rifa(
-	numeroRifa int not null auto_increment primary key,
-    serieRifa varchar(10) not null,
-    nroAfiliado int not null,
-    codSorteo int not null,
-    foreign key (nroAfiliado) references afiliado(nroAfiliado)
-    on delete no action
-    on update no action,
-    foreign key (codSorteo) references sorteo(codSorteo)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS rifa (
+    numeroRifa INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    serieRifa VARCHAR(10) NOT NULL,
+    nroAfiliado INT NOT NULL,
+    codSorteo INT NOT NULL,
+    FOREIGN KEY (nroAfiliado)
+        REFERENCES afiliado (nroAfiliado)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (codSorteo)
+        REFERENCES sorteo (codSorteo)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla Historial_Gripo
-create table IF NOT EXISTS historialGrupo(
-	idHistorialGrupo int not null primary key auto_increment,
-    nroAfiliado int not null,
-    idGrupo int not null,
-    anio year not null,
-    foreign key (nroAfiliado) references afiliado(nroAfiliado)
-    on delete no action
-    on update no action,
-    foreign key (idGrupo) references grupo(idGrupo)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS historialGrupo (
+    idHistorialGrupo INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    nroAfiliado INT NOT NULL,
+    idGrupo INT NOT NULL,
+    anio YEAR NOT NULL,
+    FOREIGN KEY (nroAfiliado)
+        REFERENCES afiliado (nroAfiliado)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (idGrupo)
+        REFERENCES grupo (idGrupo)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla Historial_Venta
-create table IF NOT EXISTS historialVenta(
-	idHistorialVenta int not null primary key auto_increment,
-    idHistorialGrupo int not null,
-    cantidadRifaVendida int not null,
-    foreign key (idHistorialGrupo) references historialgrupo(idHistorialGrupo)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS historialVenta (
+    idHistorialVenta INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    idHistorialGrupo INT NOT NULL,
+    cantidadRifaVendida INT NOT NULL,
+    FOREIGN KEY (idHistorialGrupo)
+        REFERENCES historialgrupo (idHistorialGrupo)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla infoCoutas
-create table IF NOT EXISTS infoCuotas(
-	idInfoCuotas int not null primary key auto_increment,
-    cantidadCuotas int not null,
-    montoTotal decimal not null,
-    idComprador int not null,
-    numeroRifa int not null,
-    foreign key (idComprador) references comprador(idComprador)
-    on delete no action
-    on update no action,
-    foreign key (numeroRifa) references rifa(numeroRifa)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS infoCuotas (
+    idInfoCuotas INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    cantidadCuotas INT NOT NULL,
+    montoTotal DECIMAL NOT NULL,
+    idComprador INT NOT NULL,
+    numeroRifa INT NOT NULL,
+    FOREIGN KEY (idComprador)
+        REFERENCES comprador (idComprador)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (numeroRifa)
+        REFERENCES rifa (numeroRifa)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla Coutas
-create table IF NOT EXISTS couta(
-	idCuota int not null auto_increment primary key,
-    idInfoCuotas int not null,
-    monto decimal not null,
-    fechaPago datetime not null,
-    pagada boolean not null,
-    formaPago enum('efectivo','transferencia') not null,
-    foreign key (idInfoCuotas) references infoCuotas(idInfoCuotas)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS couta (
+    idCuota INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    idInfoCuotas INT NOT NULL,
+    monto DECIMAL NOT NULL,
+    fechaPago DATETIME NOT NULL,
+    pagada BOOLEAN NOT NULL,
+    formaPago ENUM('efectivo', 'transferencia') NOT NULL,
+    FOREIGN KEY (idInfoCuotas)
+        REFERENCES infoCuotas (idInfoCuotas)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 
 -- Creacion tabla HistorialCompra
-create table IF NOT EXISTS historialCompra(
-	numeroRifa int not null primary key,
-    idComprador int not null,
-    fechaCompra datetime not null,
-    foreign key (numeroRifa) references rifa(numeroRifa)
-    on delete no action
-    on update no action,
-    foreign key (idComprador) references comprador(idComprador)
-    on delete no action
-    on update no action
+CREATE TABLE IF NOT EXISTS historialCompra (
+    numeroRifa INT NOT NULL PRIMARY KEY,
+    idComprador INT NOT NULL,
+    fechaCompra DATETIME NOT NULL,
+    FOREIGN KEY (numeroRifa)
+        REFERENCES rifa (numeroRifa)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    FOREIGN KEY (idComprador)
+        REFERENCES comprador (idComprador)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
 );
