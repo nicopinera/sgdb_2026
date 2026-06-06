@@ -10,14 +10,14 @@ SELECT
 FROM
     persona
 WHERE
-    apellido = 'piñera'
+    apellido = 'piñera';
 
 -- Actualizar datos
 UPDATE persona 
 SET 
     apellido = 'bustamante'
 WHERE
-    dni = 1
+    dni = 1;
 
 -- Eliminar datos
 DELETE FROM persona 
