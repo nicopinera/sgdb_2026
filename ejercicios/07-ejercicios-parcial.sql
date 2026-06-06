@@ -1,0 +1,297 @@
+-- 1. Mostrar los datos de los clientes
+SELECT c.first_name, c.last_name, c.email, ad.address, ad.district, ad.postal_code, ad.phone, ci.city, co.country
+FROM customer c
+LEFT JOIN address ad ON ad.address_id = c.address_id
+LEFT JOIN city ci ON ad.city_id = ci.city_id
+LEFT JOIN country co ON ci.country_id = co.country_id;
+
+-- 2. Mostrar el apellido y nombre de todos los clientes.
+SELECT 
+    first_name, last_name
+FROM
+    customer;
+ 
+-- 3. Mostrar el apellido y nombre de los clientes activos
+SELECT 
+    first_name, last_name
+FROM
+    customer
+WHERE
+    active = 1;
+
+-- 4. Mostrar los filmes en los que participó un determinado actor_id
+SELECT 
+    fi.actor_id, f.title, fi.film_id
+FROM
+    film_actor fi
+        LEFT JOIN
+    film f ON f.film_id = fi.film_id
+WHERE
+    fi.actor_id = 2
+
+-- 5. Mostrar la cantidad de Clientes activos
+SELECT 
+    COUNT(*) AS cantClientesActivos
+FROM
+    customer
+WHERE
+    active = 1
+
+-- 6. Mostrar todas los alquileres de películas realizados entre dos fechas determinadas
+SELECT 
+    r.rental_id,
+    r.rental_date,
+    r.return_date,
+    r.staff_id,
+    c.store_id,
+    c.first_name,
+    c.last_name,
+    c.email,
+    f.title,
+    f.description,
+    f.rating
+FROM
+    rental r
+        LEFT JOIN
+    customer c ON c.customer_id = r.customer_id
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+WHERE
+    r.rental_date BETWEEN '2005-05-24' AND '2005-05-30';
+
+-- 7. Mostrar la cantidad de alquileres de películas realizadas entre dos fechas determinadas
+SELECT 
+    COUNT(*)
+FROM
+    rental
+WHERE
+    rental_date BETWEEN '2005-05-24' AND '2005-05-25';
+
+-- 8. Mostrar la lista de clientes ordenada alfabéticamente
+SELECT 
+    first_name, last_name
+FROM
+    customer
+ORDER BY first_name , last_name DESC;
+
+-- 9. Mostrar la cantidad de alquileres que realizó cada cliente (custumer_id)
+SELECT 
+    r.customer_id, COUNT(r.rental_id)
+FROM
+    rental r
+GROUP BY r.customer_id;
+
+-- 10. Mostrar la cantidad de alquileres de películas realizados por cada cliente entre dos fechas dadas
+select r.customer_id, count(r.rental_id) from rental r where r.rental_date between '2005-05-24' AND '2005-05-30' group by r.customer_id;
+
+-- 12. Mostrar todos los lenguajes registrados
+
+-- 13. Mostrar las películas de un determinado lenguaje (languaje_id)
+
+-- 14. Mostrar los medios de pagos registrados en la base de datos
+
+-- 15. ¿Cuál es la fecha del último alquiler registrado en la base de datos?
+
+-- 16. Mostrar el apellido, nombre y dirección de los clientes.
+
+-- 17. Mostrar el apellido, nombre y fecha de alquiler de cada cliente
+
+-- 18. Mostrar el apellido, nombre y fecha de alquiler de cada cliente realizada entre fechas
+
+-- 19. Mostrar el nombre de la película y cantidad de veces que fue alquilada.
+
+-- 20. Mostrar el nombre de las películas que fueron alquiladas más de 15 veces.
+
+-- 21. ¿Cuál es el promedio de cantidad (amount) realizados por película?
+
+-- 22. Establecer un ranking de alquileres que muestre las películas más alquiladas
+
+-- 23. Realizar una consulta que permita mostrar el apellido, nombre, ciudad y país de cada cliente
+
+-- 24. ¿Cuántos clientes viven en una ciudad determinada?
+
+-- 25. ¿Cuántos ejemplares hay de cada película?
+
+-- Listá todos los actores (nombre y apellido) junto con el título de cada película en la que participaron. Incluí actores que no tienen películas asignadas.
+
+-- Mostrá el nombre de cada película (film.title), la categoría a la que pertenece (category.name) y el nombre de la tienda (store_id) que tiene copias en inventario. Ordená por categoría y luego por título.
+
+-- Listá todos los empleados (staff) con su nombre, apellido, dirección completa (address, city, country) y el nombre de la tienda donde trabajan. Usá LEFT JOINs en toda la cadena.
+
+-- Mostrá todos los alquileres (rental) realizados incluyendo: fecha de alquiler, nombre del cliente, título de la película alquilada y nombre del empleado que lo gestionó. Ordená por fecha de alquiler descendente.
+
+-- Listá todas las películas que nunca fueron alquiladas (no tienen registros en inventory o sus copias jamás generaron un rental). Mostrá título y categoría. Pista: pensá cómo el LEFT JOIN expone los NULLs
+
+-- Para cada categoría de film, mostrá la cantidad de films que tiene y el promedio de duración (film.length). Ordená de mayor a menor por cantidad de films.
+-- Mostrá los 5 actores que aparecen en más películas. Columnas: nombre, apellido, cantidad de films. Excluí actores con menos de 10 películas usando HAVING.
+-- Para cada tienda (store_id), calculá el total recaudado por año (YEAR(payment_date)) y mes. Ordená por tienda, año y mes.
+-- Listá los clientes que realizaron más de 30 alquileres en total. Mostrá nombre, apellido y cantidad de alquileres.
+-- Para cada empleado (staff), mostrá la cantidad de alquileres que gestionó y el monto total de pagos asociados a esos alquileres. Filtrá solo los del año 2005.
+-- Mostrá las 3 películas más rentables (mayor SUM de payments). Columnas: título, categoría, total recaudado.
+
+-- ########################################################################################
+-- ########################################################################################
+-- ########################################################################################
+
+-- 1. ¿Cuál es la categoría que más alquileres tuvo entre dos fechas dadas, en cada país?
+
+-- 2. Mostrar el ranking por Categoría, de los alquileres realizados por clientes de "Brasil"
+
+-- 3. Mostrar todos los clientes que no hayan alquilado nunca una película de "Horror"
+
+-- 4. ¿Cuáles son las categorías que se alquilaron mas que la categoría Family?
+
+-- 5. Mostrar las categorías que hayan realizado menos alquileres que las categorías "Horror", "Games" y "Family"
+
+-- 6. Mostrar el nombre de los clientes que realizaron alquileres de películas en todas las categorías
+
+-- 7. ¿Existen clientes que alquilaran mas de una vez una misma película?
+
+-- 8. Mostrar el ranking de películas alquiladas, por cada vendedor.
+
+-- 9. Realizar una consulta que determine cuál es el medio de pago más utilizado por país.
+
+-- 10. Mostrar los clientes que nunca hayan alquilado películas protagonizadas por los actores “Swank” y  ”Cage”.
+
+-- 11. Realizar una consulta que permita determinar cuáles son los montos totales recaudados en cada ciudad, discriminado por medio de pago.
+
+-- Seleccioná los actores (nombre y apellido) cuyas películas hayan sido rentadas al menos una vez en el mes de junio. No uses DISTINCT, usá GROUP BY.
+
+-- Seleccioná los actores que participaron en films de más de 5 categorías distintas. Mostrá nombre, apellido y cantidad de categorías. Ordená de mayor a menor.
+
+-- Para cada actor, mostrá: apellido, cantidad de films que superaron la recaudación promedio de todos los films, cantidad de categorías distintas de sus films, y cantidad total de alquileres de sus films.
+
+-- Listá los clientes que tienen pagos pendientes: alquileres sin return_date donde la fecha de devolución esperada (rental_date + rental_duration) ya pasó. Mostrá nombre, apellido, título del film y días de atraso.
+
+-- Generá el reporte de performance por tienda, empleado y film del PDF (pág. 12): una fila por cada combinación válida (store, staff, film) con cantidad de alquileres y recaudación. Los nulos deben ser 0.
+
+-- Seleccioná el/los film/s cuya recaudación es la máxima dentro de su categoría. Mostrá título, categoría y monto. Puede haber empates
+
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+
+-- EJERCICIO 1.
+-- Recupere de la base de datos un listado de todos las películas que tienen 
+-- mas copias en el inventario que el promedio de las películas.
+-- De cada película en el listado deberá indicar:
+-- NOMBRE DE LA PELÍCULA
+-- CANTIDAD DE ACTORES QUE ACTÚAN
+-- CANTIDAD TOTAL DE ALQUILERES QUE SE REALIZARON DE ESA PELÍCULA
+-- CANTIDAD DE ALQUILERES NO DEVUELTOS DE ESA PELICULA
+
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+-- EJERCICIO 2.
+-- Por cada combinación categoría - actor indicar:
+-- Nombre de la categoría,
+-- Nombre y apellido del actor
+-- Cuantos alquileres se realizaron de cada categoría por películas de cada actor,
+-- Se debe producir un registro para cada una de las combinaciones actor categoría (producto cartesiano)
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+-- EJERCICIO 3.
+-- Recupere la actuacion de los clientes generando un listado de los clientes, cada renglon del listado debera contener:
+-- Apellido del cliente
+-- Nombre del cliente
+-- Monto total de pagos realizado
+-- Mes y año en el que ese cliente pago mas por todos los alquileres del mes, si hay mas de uno mayor mostrar solo 1
+-- Cantidad de alquileres que realizo en ese mes y año
+-- Solo mostrar los clientes que tengan al menos un alquiler no devuelto
+-- Ordenar por monto total decendente
+
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+-- EJERCICIO 4.
+-- Recupere de la base de datos un listado de todos los actores que han recaudado por sus 
+-- películas mas que el promedio de los actores. Para el calculo del promedio tener en 
+-- cuenta los actores que no tienen recaudacion.
+-- De cada actor en el listado deberá indicar: 
+-- NOMBRE y APELLIDO
+-- CANTIDAD DE PELÍCULAS QUE ACTUÓ
+-- CANTIDAD DE ALQUILERES NO DEVUELTOS DE ESE ACTOR
+-- PROMEDIO DE RECUDACION DE TODOS LOS ACTORES (esta columna tendrá el mismo valor en todas las filas)
+-- El estado de los datos de ejemplo es uno de los posibles estados, la consulta debe funcionar correctamente cualquiera sean los datos.
+
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+-- EJERCICIO 5.
+-- Recupere la actuación de los clientes generando un listado de los clientes por la cantidad de alquileres realizados, 
+-- cada renglón del listado deberá contener lo siguiente:
+-- Apellido del cliente
+-- Nombre del cliente
+-- Cantidad total de alquileres realizados
+-- Mes y año en el que ese cliente realizó más alquileres, si hay mas de uno mayor mostrar uno solo.
+-- Cantidad de alquileres que realizó en ese mes y año
+-- Solo mostrar los clientes que no tengan alquileres no devueltos. Ordenar por apellido y nombre.
+-- APELLIDOCLIENTE NOMBRECLIENTE CANTTOTAL MESMAYOR ANOMAYOR CANTIDAD
+
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+-- EJERCICIO 6.
+-- Generar una consulta SQL que genere un registro para cada combinacion film y pais, 
+-- La consulta calculará la cantidad de alquileres de ese film realizados por clientes que viven en ese pais. 
+-- Si no hay alquileres de un film realizados por clientes de un pais poner 0 (cero), no se aceptan null. (10pts)
+-- Además, incluir una columna que contenga la cantidad de alquileres no devueltos de ese film por clientes que viven en ese pais.(10pts)
+-- Por último agregar una columna que recupere la cantidad de copias que existen de ese film (este valor se repetirá por cada registro de un mismo film).(10pts)
+-- Ordenar por CANTIDAD_ALQ descendente.(5pts)
+-- El listado debe incluir SOLO los films que tengan en total mas de 20 alquileres combinados con TODOS los paises. (15pts)
+-- El reporte tendra las siguientes columnas:
+-- TITULO_FILM NOMBRE_PAIS CANTIDAD_ALQ NO_DEVUELTOS COPIAS_FILM
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+
+#recupere la actuacion de los clientes generando un listado de los clientes, cada renglon del listado debera contener:
+
+#Apellido del cliente
+#Nombre del cliente
+#Monto total de pagos realizado
+#Mes y año en el que ese cliente pago mas por todos los alquileres del mes, si hay mas de uno mayor mostrar solo 1
+#cantidad de alquileres que realizo en ese mes y año
+
+#Solo mostrar los clientes que tengan al menos un alquiler no devuelto
+#Ordenar por monto total decendente
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+
+-- Implemente una consulta sobre la base de datos “Sakila” que liste  los actores, el monto de alquileres cobrados de sus films y 
+-- el nombre de la pelicula que  mas recaudó dentro de las que trabajó ese actor , muéstrelos ordenados por monto de alquileres de mayor a menor.
+-- El listado tendrá las siguientes columnas:
+-- 1- Nombre del actor
+-- 2- Apellido del actor
+-- 3- Monto cobrado por alquileres de sus films
+-- 4- Nombre de la película mas taquillera entre las que actúa
+-- El estado actual de los datos es uno de los posibles estados, la consulta debe funcionar correctamente cualquiera sea el estado de los datos,puede que sea necesario modificar los datos para probar diferentes posibilidades.
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+
+#Implemente una consulta sobre la base de datos “Sakila” que liste  los actores, 
+#el monto de alquileres cobrados de sus films y el nombre de la pelicula que 
+#mas recaudó dentro de las que trabajó ese actor , muéstrelos ordenados por monto de alquileres de mayor a menor.
+#El listado tendrá las siguientes columnas:
+#1- Nombre del actor
+#2- Apellido del actor
+#3- Monto cobrado por alquileres de sus films
+#4- Nombre de la película mas taquillera entre las que actúa
+
+-- Apparently everything OK (i compared it with the file that Bada sent me: 'examenFinal'.
+-- Bada's file isn't ordered by total earnings,careful)
