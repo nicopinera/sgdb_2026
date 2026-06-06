@@ -1,9 +1,22 @@
 -- 1. Mostrar los datos de los clientes
-SELECT c.first_name, c.last_name, c.email, ad.address, ad.district, ad.postal_code, ad.phone, ci.city, co.country
-FROM customer c
-LEFT JOIN address ad ON ad.address_id = c.address_id
-LEFT JOIN city ci ON ad.city_id = ci.city_id
-LEFT JOIN country co ON ci.country_id = co.country_id;
+SELECT 
+    c.first_name,
+    c.last_name,
+    c.email,
+    ad.address,
+    ad.district,
+    ad.postal_code,
+    ad.phone,
+    ci.city,
+    co.country
+FROM
+    customer c
+        LEFT JOIN
+    address ad ON ad.address_id = c.address_id
+        LEFT JOIN
+    city ci ON ad.city_id = ci.city_id
+        LEFT JOIN
+    country co ON ci.country_id = co.country_id;
 
 -- 2. Mostrar el apellido y nombre de todos los clientes.
 SELECT 
@@ -27,7 +40,7 @@ FROM
         LEFT JOIN
     film f ON f.film_id = fi.film_id
 WHERE
-    fi.actor_id = 2
+    fi.actor_id = 2;
 
 -- 5. Mostrar la cantidad de Clientes activos
 SELECT 
@@ -35,7 +48,7 @@ SELECT
 FROM
     customer
 WHERE
-    active = 1
+    active = 1;
 
 -- 6. Mostrar todas los alquileres de películas realizados entre dos fechas determinadas
 SELECT 
@@ -84,52 +97,173 @@ FROM
 GROUP BY r.customer_id;
 
 -- 10. Mostrar la cantidad de alquileres de películas realizados por cada cliente entre dos fechas dadas
-select r.customer_id, count(r.rental_id) from rental r where r.rental_date between '2005-05-24' AND '2005-05-30' group by r.customer_id;
+SELECT 
+    r.customer_id, COUNT(r.rental_id)
+FROM
+    rental r
+WHERE
+    r.rental_date BETWEEN '2005-05-24' AND '2005-05-30'
+GROUP BY r.customer_id;
 
 -- 12. Mostrar todos los lenguajes registrados
+SELECT 
+    *
+FROM
+    language;
 
 -- 13. Mostrar las películas de un determinado lenguaje (languaje_id)
-
--- 14. Mostrar los medios de pagos registrados en la base de datos
+SELECT 
+    title, description, release_year, la.name
+FROM
+    film f
+        LEFT JOIN
+    language la ON f.language_id = la.language_id
+WHERE
+    f.language_id = 3;
 
 -- 15. ¿Cuál es la fecha del último alquiler registrado en la base de datos?
+SELECT 
+    MAX(rental_date)
+FROM
+    rental;-- Fecha mas grande
+SELECT 
+    MIN(rental_date)
+FROM
+    rental; -- Fecha mas chica
 
 -- 16. Mostrar el apellido, nombre y dirección de los clientes.
+SELECT 
+    c.first_name, c.last_name, ad.address
+FROM
+    customer c
+        LEFT JOIN
+    address ad ON c.address_id = ad.address_id;
 
 -- 17. Mostrar el apellido, nombre y fecha de alquiler de cada cliente
+SELECT 
+    c.first_name, c.last_name, r.rental_date
+FROM
+    rental r
+        LEFT JOIN
+    customer c ON c.customer_id = r.customer_id
+ORDER BY c.first_name , c.last_name , r.rental_date DESC;
 
 -- 18. Mostrar el apellido, nombre y fecha de alquiler de cada cliente realizada entre fechas
+SELECT 
+    c.first_name, c.last_name, r.rental_date
+FROM
+    rental r
+        LEFT JOIN
+    customer c ON c.customer_id = r.customer_id
+WHERE
+    r.rental_date BETWEEN '2005-05-24' AND '2005-05-30'
+ORDER BY c.first_name , c.last_name , r.rental_date DESC;
 
 -- 19. Mostrar el nombre de la película y cantidad de veces que fue alquilada.
+SELECT 
+    f.title, COUNT(r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY f.film_id;
 
 -- 20. Mostrar el nombre de las películas que fueron alquiladas más de 15 veces.
+SELECT 
+    f.title, COUNT(r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY f.film_id
+HAVING cantRentas >= 15
+ORDER BY f.title ASC;
 
--- 21. ¿Cuál es el promedio de cantidad (amount) realizados por película?
+-- 21. ¿Cuál es el promedio de amount recaudado por película?
+SELECT 
+    f.title, AVG(p.amount) AS average_amount
+FROM
+    payment p
+        JOIN
+    rental r ON r.rental_id = p.rental_id
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY f.film_id;
 
 -- 22. Establecer un ranking de alquileres que muestre las películas más alquiladas
-
--- 23. Realizar una consulta que permita mostrar el apellido, nombre, ciudad y país de cada cliente
+SELECT 
+    f.title, COUNT(r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY f.film_id
+ORDER BY cantRentas DESC;
 
 -- 24. ¿Cuántos clientes viven en una ciudad determinada?
+SELECT 
+    COUNT(*)
+FROM
+    customer cu
+        JOIN
+    address ad ON cu.address_id = ad.address_id
+        JOIN
+    city ci ON ad.city_id = ci.city_id
+WHERE
+    ci.city = 'Simferopol'
+GROUP BY ci.city_id;
+SELECT 
+    ci.city, COUNT(DISTINCT cu.customer_id)
+FROM
+    customer cu
+        JOIN
+    address ad ON cu.address_id = ad.address_id
+        JOIN
+    city ci ON ad.city_id = ci.city_id
+GROUP BY ci.city_id;
 
 -- 25. ¿Cuántos ejemplares hay de cada película?
+SELECT 
+    f.title, COUNT(i.inventory_id) AS cantCopias
+FROM
+    inventory i
+        JOIN
+    film f ON i.film_id = f.film_id
+GROUP BY f.film_id
+ORDER BY cantCopias DESC;
 
--- Listá todos los actores (nombre y apellido) junto con el título de cada película en la que participaron. Incluí actores que no tienen películas asignadas.
+-- 26. Listá todos los actores (nombre y apellido) junto con el título de cada película en la que participaron. Incluí actores que no tienen películas asignadas.
 
--- Mostrá el nombre de cada película (film.title), la categoría a la que pertenece (category.name) y el nombre de la tienda (store_id) que tiene copias en inventario. Ordená por categoría y luego por título.
+-- 27. Mostrá el nombre de cada película (film.title), la categoría a la que pertenece (category.name) y el nombre de la tienda (store_id) que tiene copias en inventario. 
+-- Ordená por categoría y luego por título.
 
--- Listá todos los empleados (staff) con su nombre, apellido, dirección completa (address, city, country) y el nombre de la tienda donde trabajan. Usá LEFT JOINs en toda la cadena.
+-- 28. Listá todos los empleados (staff) con su nombre, apellido, dirección completa (address, city, country) y el nombre de la tienda donde trabajan. Usá LEFT JOINs en toda la cadena.
 
--- Mostrá todos los alquileres (rental) realizados incluyendo: fecha de alquiler, nombre del cliente, título de la película alquilada y nombre del empleado que lo gestionó. Ordená por fecha de alquiler descendente.
+-- 29. Mostrá todos los alquileres (rental) realizados incluyendo: fecha de alquiler, nombre del cliente, título de la película alquilada y nombre del empleado que lo gestionó. 
+-- Ordená por fecha de alquiler descendente.
 
--- Listá todas las películas que nunca fueron alquiladas (no tienen registros en inventory o sus copias jamás generaron un rental). Mostrá título y categoría. Pista: pensá cómo el LEFT JOIN expone los NULLs
+-- 30. Listá todas las películas que nunca fueron alquiladas (no tienen registros en inventory o sus copias jamás generaron un rental). Mostrá título y categoría. 
+-- Pista: pensá cómo el LEFT JOIN expone los NULLs
 
--- Para cada categoría de film, mostrá la cantidad de films que tiene y el promedio de duración (film.length). Ordená de mayor a menor por cantidad de films.
--- Mostrá los 5 actores que aparecen en más películas. Columnas: nombre, apellido, cantidad de films. Excluí actores con menos de 10 películas usando HAVING.
--- Para cada tienda (store_id), calculá el total recaudado por año (YEAR(payment_date)) y mes. Ordená por tienda, año y mes.
--- Listá los clientes que realizaron más de 30 alquileres en total. Mostrá nombre, apellido y cantidad de alquileres.
--- Para cada empleado (staff), mostrá la cantidad de alquileres que gestionó y el monto total de pagos asociados a esos alquileres. Filtrá solo los del año 2005.
--- Mostrá las 3 películas más rentables (mayor SUM de payments). Columnas: título, categoría, total recaudado.
+-- 31. Para cada categoría de film, mostrá la cantidad de films que tiene y el promedio de duración (film.length). Ordená de mayor a menor por cantidad de films.
+
+-- 32. Mostrá los 5 actores que aparecen en más películas. Columnas: nombre, apellido, cantidad de films. Excluí actores con menos de 10 películas usando HAVING.
+
+-- 33. Para cada tienda (store_id), calculá el total recaudado por año (YEAR(payment_date)) y mes. Ordená por tienda, año y mes.
+
+-- 34. Listá los clientes que realizaron más de 30 alquileres en total. Mostrá nombre, apellido y cantidad de alquileres.
+
+-- 35. Para cada empleado (staff), mostrá la cantidad de alquileres que gestionó y el monto total de pagos asociados a esos alquileres. Filtrá solo los del año 2005.
+
+-- 36. Mostrá las 3 películas más rentables (mayor SUM de payments). Columnas: título, categoría, total recaudado.
 
 -- ########################################################################################
 -- ########################################################################################
