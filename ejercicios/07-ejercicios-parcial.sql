@@ -399,34 +399,457 @@ LIMIT 3;
 -- ########################################################################################
 
 -- 1. ¿Cuál es la categoría que más alquileres tuvo entre dos fechas dadas, en cada país?
+SELECT 
+    ca.name, cou.country, COUNT(r.rental_id) AS cantRentas
+FROM
+    rental r
+        LEFT JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        LEFT JOIN
+    film_category fc ON fc.film_id = i.film_id
+        LEFT JOIN
+    category ca ON ca.category_id = fc.category_id
+        LEFT JOIN
+    customer c ON c.customer_id = r.customer_id
+        LEFT JOIN
+    address ad ON ad.address_id = c.address_id
+        LEFT JOIN
+    city ci ON ci.city_id = ad.city_id
+        LEFT JOIN
+    country cou ON cou.country_id = ci.country_id
+WHERE
+    r.rental_date BETWEEN '2005-05-24' AND '2005-08-30'
+GROUP BY ca.name , cou.country
+ORDER BY cantRentas DESC;
 
 -- 2. Mostrar el ranking por Categoría, de los alquileres realizados por clientes de "Brasil"
+SELECT 
+    ca.name, cou.country, COUNT(r.rental_id) AS cantRentas
+FROM
+    rental r
+        LEFT JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        LEFT JOIN
+    film_category fc ON fc.film_id = i.film_id
+        LEFT JOIN
+    category ca ON ca.category_id = fc.category_id
+        LEFT JOIN
+    customer c ON c.customer_id = r.customer_id
+        LEFT JOIN
+    address ad ON ad.address_id = c.address_id
+        LEFT JOIN
+    city ci ON ci.city_id = ad.city_id
+        LEFT JOIN
+    country cou ON cou.country_id = ci.country_id
+WHERE cou.country = 'India'
+GROUP BY ca.name , cou.country
+ORDER BY cantRentas DESC;
 
 -- 3. Mostrar todos los clientes que no hayan alquilado nunca una película de "Horror"
+SELECT 
+    *
+FROM
+    customer c
+WHERE
+    c.customer_id NOT IN (SELECT DISTINCT
+            r.customer_id
+        FROM
+            rental r
+                JOIN
+            inventory i ON i.inventory_id = r.inventory_id
+                JOIN
+            film_category fc ON fc.film_id = i.film_id
+                JOIN
+            category ca ON ca.category_id = fc.category_id
+        WHERE
+            ca.name = 'Horror');
+
 
 -- 4. ¿Cuáles son las categorías que se alquilaron mas que la categoría Family?
+SELECT 
+    ca.name, COUNT(DISTINCT r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.film_id
+        JOIN
+    category ca ON ca.category_id = fc.category_id
+GROUP BY ca.name
+HAVING cantRentas > (SELECT 
+        COUNT(DISTINCT r.rental_id)
+    FROM
+        rental r
+            JOIN
+        inventory i ON i.inventory_id = r.inventory_id
+            JOIN
+        film_category fc ON fc.film_id = i.film_id
+            JOIN
+        category ca ON ca.category_id = fc.category_id
+    WHERE
+        ca.name = 'Family')
+;
+
+-- Consulta que trae la cantidad de rentas de una categoria
+SELECT 
+    COUNT(DISTINCT r.rental_id)
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.film_id
+        JOIN
+    category ca ON ca.category_id = fc.category_id
+    where ca.name = 'Family';
 
 -- 5. Mostrar las categorías que hayan realizado menos alquileres que las categorías "Horror", "Games" y "Family"
+SELECT 
+    ca.name, COUNT(DISTINCT r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.film_id
+        JOIN
+    category ca ON ca.category_id = fc.category_id
+GROUP BY ca.name
+HAVING cantRentas < ALL (SELECT 
+        COUNT(DISTINCT r.rental_id)
+    FROM
+        rental r
+            JOIN
+        inventory i ON i.inventory_id = r.inventory_id
+            JOIN
+        film_category fc ON fc.film_id = i.film_id
+            JOIN
+        category ca ON ca.category_id = fc.category_id
+    WHERE
+        ca.name IN ('Horror' , 'Games', 'Family')
+    GROUP BY ca.name);
+
+-- lista de cantidad de rentas de cada categoria
+SELECT 
+    COUNT(DISTINCT r.rental_id)
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.film_id
+        JOIN
+    category ca ON ca.category_id = fc.category_id
+WHERE
+    ca.name IN ('Horror' , 'Games', 'Family')
+GROUP BY ca.name;
 
 -- 6. Mostrar el nombre de los clientes que realizaron alquileres de películas en todas las categorías
+SELECT 
+    c.first_name, c.last_name
+FROM
+    customer c
+        JOIN
+    rental r ON r.customer_id = c.customer_id
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.film_id
+GROUP BY c.customer_id
+HAVING COUNT(DISTINCT fc.category_id) = (SELECT 
+        COUNT(*)
+    FROM
+        category);
 
 -- 7. ¿Existen clientes que alquilaran mas de una vez una misma película?
+SELECT 
+    c.customer_id, i.film_id, COUNT(*)
+FROM
+    customer c
+        JOIN
+    rental r ON r.customer_id = c.customer_id
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+GROUP BY c.customer_id , i.film_id
+HAVING COUNT(*) > 1;
 
 -- 8. Mostrar el ranking de películas alquiladas, por cada vendedor.
-
--- 9. Realizar una consulta que determine cuál es el medio de pago más utilizado por país.
+SELECT 
+    st.first_name,
+    st.last_name,
+    f.title,
+    COUNT(DISTINCT r.rental_id) AS cantRentas
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    staff st ON st.staff_id = r.staff_id
+        JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY r.staff_id , i.film_id
+ORDER BY st.staff_id , cantRentas DESC;
 
 -- 10. Mostrar los clientes que nunca hayan alquilado películas protagonizadas por los actores “Swank” y  ”Cage”.
-
--- 11. Realizar una consulta que permita determinar cuáles son los montos totales recaudados en cada ciudad, discriminado por medio de pago.
+SELECT 
+    *
+FROM
+    customer c
+WHERE
+    c.customer_id NOT IN (SELECT DISTINCT
+            r.customer_id
+        FROM
+            rental r
+                JOIN
+            inventory i ON r.inventory_id = i.inventory_id
+                JOIN
+            film_actor fa ON fa.film_id = i.film_id
+                JOIN
+            actor a ON a.actor_id = fa.actor_id
+        WHERE
+            a.last_name = 'Swank'
+                OR a.last_name = 'Cage')
+;
+SELECT DISTINCT
+    r.customer_id
+FROM
+    rental r
+        JOIN
+    inventory i ON r.inventory_id = i.inventory_id
+        JOIN
+    film_actor fa ON fa.film_id = i.film_id
+        JOIN
+    actor a ON a.actor_id = fa.actor_id
+WHERE
+    a.last_name = 'Swank'
+        OR a.last_name = 'Cage';
 
 -- Seleccioná los actores (nombre y apellido) cuyas películas hayan sido rentadas al menos una vez en el mes de junio. No uses DISTINCT, usá GROUP BY.
+SELECT 
+    a.first_name, a.last_name
+FROM
+    actor a
+WHERE
+    a.actor_id IN (SELECT 
+            fa.actor_id
+        FROM
+            rental r
+                JOIN
+            inventory i ON i.inventory_id = r.inventory_id
+                JOIN
+            film_actor fa ON fa.film_id = i.film_id
+        WHERE
+            MONTH(r.rental_date) = 6
+        GROUP BY fa.actor_id
+        HAVING COUNT(*) >= 1);
+
+SELECT 
+    fa.actor_id
+FROM
+    rental r
+        LEFT JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        LEFT JOIN
+    film_actor fa ON fa.film_id = i.film_id
+WHERE
+    MONTH(r.rental_date) = 6
+GROUP BY fa.actor_id
+HAVING COUNT(*) > 1;
+
+-- otra forma de resolverlo
+SELECT 
+    a.first_name, a.last_name, COUNT(DISTINCT r.rental_id)
+FROM
+    actor a
+        JOIN
+    film_actor fa ON fa.actor_id = a.actor_id
+        JOIN
+    inventory i ON i.film_id = fa.film_id
+        JOIN
+    rental r ON r.inventory_id = i.inventory_id
+WHERE
+    MONTH(r.rental_date) = 6
+GROUP BY a.actor_id;
 
 -- Seleccioná los actores que participaron en films de más de 5 categorías distintas. Mostrá nombre, apellido y cantidad de categorías. Ordená de mayor a menor.
+SELECT 
+    a.first_name,
+    a.last_name,
+    (SELECT 
+            COUNT(DISTINCT fc.category_id)
+        FROM
+            film_category fc
+                JOIN
+            film_actor fa ON fc.film_id = fa.film_id
+        WHERE
+            fa.actor_id = a.actor_id) AS cantCategoriasDistintas
+FROM
+    actor a
+HAVING cantCategoriasDistintas > 10
+ORDER BY cantCategoriasDistintas DESC;
+
+-- sub consulta
+SELECT 
+    COUNT(DISTINCT fc.category_id)
+FROM
+    film_category fc
+        JOIN
+    film_actor fa ON fc.film_id = fa.film_id
+WHERE
+    fa.actor_id = 1;
+
+-- forma sin subconsulta
+SELECT 
+    a.first_name,
+    a.last_name,
+    COUNT(DISTINCT fc.category_id) AS cantCategoriasDistintas
+FROM
+    actor a
+        JOIN
+    film_actor fa ON a.actor_id = fa.actor_id
+        JOIN
+    film_category fc ON fa.film_id = fc.film_id
+GROUP BY a.actor_id
+HAVING COUNT(DISTINCT fc.category_id) > 5
+ORDER BY cantCategoriasDistintas DESC;
 
 -- Para cada actor, mostrá: apellido, cantidad de films que superaron la recaudación promedio de todos los films, cantidad de categorías distintas de sus films, y cantidad total de alquileres de sus films.
+SELECT 
+    a.actor_id,
+    a.last_name,
+    (SELECT 
+            COUNT(*)
+        FROM
+            (SELECT 
+                i2.film_id, SUM(p2.amount) AS totalRecaudado
+            FROM
+                payment p2
+            JOIN rental r2 ON p2.rental_id = r2.rental_id
+            JOIN inventory i2 ON i2.inventory_id = r2.inventory_id
+            JOIN film_actor fa2 ON fa2.film_id = i2.film_id
+            WHERE
+                fa2.actor_id = a.actor_id
+            GROUP BY i2.film_id) recaudacion_pelica_actor
+        WHERE
+            totalRecaudado > (SELECT 
+                    AVG(totalRecaudadoPorPelicula)
+                FROM
+                    (SELECT 
+                        SUM(p1.amount) AS totalRecaudadoPorPelicula
+                    FROM
+                        payment p1
+                    JOIN rental r1 ON r1.rental_id = p1.rental_id
+                    JOIN inventory i1 ON r1.inventory_id = i1.inventory_id
+                    GROUP BY i1.film_id) tabla_totales)) AS cantPeliculasSuperaPromedio,
+    (SELECT 
+            COUNT(DISTINCT fc3.category_id)
+        FROM
+            film_actor fa3
+                JOIN
+            film_category fc3 ON fa3.film_id = fc3.film_id
+        WHERE
+            fa3.actor_id = a.actor_id) AS cantCategoriasDistintas,
+    (SELECT 
+            COUNT(r4.rental_id)
+        FROM
+            rental r4
+                JOIN
+            inventory i4 ON r4.inventory_id = i4.inventory_id
+                JOIN
+            film_actor fa4 ON fa4.film_id = i4.film_id
+        WHERE
+            fa4.actor_id = a.actor_id) AS cantRentas
+FROM
+    actor a;
 
--- Listá los clientes que tienen pagos pendientes: alquileres sin return_date donde la fecha de devolución esperada (rental_date + rental_duration) ya pasó. Mostrá nombre, apellido, título del film y días de atraso.
+-- sub consulta 1
+-- Obtengo la suma de lo que recaudo cada film
+SELECT 
+    SUM(p1.amount) AS totalRecaudadoPorPelicula
+FROM
+    payment p1
+        JOIN
+    rental r1 ON r1.rental_id = p1.rental_id
+        JOIN
+    inventory i1 ON r1.inventory_id = i1.inventory_id
+GROUP BY i1.film_id;
+-- obtengo el promedio que recauda una pelicula
+SELECT
+    AVG(totalRecaudadoPorPelicula)
+FROM
+    (SELECT 
+        SUM(p1.amount) AS totalRecaudadoPorPelicula
+    FROM
+        payment p1
+    JOIN rental r1 ON r1.rental_id = p1.rental_id
+    JOIN inventory i1 ON r1.inventory_id = i1.inventory_id
+    GROUP BY i1.film_id) tabla_totales;
+-- obtengo el total que recaudo cada pelicula del actor
+SELECT 
+    i2.film_id, SUM(p2.amount)
+FROM
+    payment p2
+        JOIN
+    rental r2 ON p2.rental_id = r2.rental_id
+        JOIN
+    inventory i2 ON i2.inventory_id = r2.inventory_id
+        JOIN
+    film_actor fa2 ON fa2.film_id = i2.film_id
+WHERE
+    fa2.actor_id = 2
+GROUP BY i2.film_id;
+
+-- obtenemos la cantidad de peliculas que superan el promedio
+SELECT 
+    COUNT(*)
+FROM
+    (SELECT 
+        i2.film_id, SUM(p2.amount) AS totalRecaudado
+    FROM
+        payment p2
+    JOIN rental r2 ON p2.rental_id = r2.rental_id
+    JOIN inventory i2 ON i2.inventory_id = r2.inventory_id
+    JOIN film_actor fa2 ON fa2.film_id = i2.film_id
+    WHERE
+        fa2.actor_id = 3
+    GROUP BY i2.film_id) recaudacion_pelica_actor
+WHERE
+    totalRecaudado > (SELECT 
+            AVG(totalRecaudadoPorPelicula)
+        FROM
+            (SELECT 
+                SUM(p1.amount) AS totalRecaudadoPorPelicula
+            FROM
+                payment p1
+            JOIN rental r1 ON r1.rental_id = p1.rental_id
+            JOIN inventory i1 ON r1.inventory_id = i1.inventory_id
+            GROUP BY i1.film_id) tabla_totales);
+
+-- sub consulta 2
+SELECT 
+    COUNT(DISTINCT fc.category_id)
+FROM
+    film_actor fa
+        JOIN
+    film_category fc ON fa.film_id = fc.film_id
+WHERE
+    fa.actor_id = 2;
+
+-- sub consulta 3
+SELECT 
+    COUNT(r3.rental_id)
+FROM
+    rental r3
+        JOIN
+    inventory i3 ON r3.inventory_id = i3.inventory_id
+        JOIN
+    film_actor fa3 ON fa3.film_id = i3.film_id
+WHERE
+    fa3.actor_id = 1;
+
+-- Listá los clientes que tienen pagos pendientes: alquileres sin return_date donde la fecha de devolución esperada (rental_date + rental_duration) ya pasó. 
+-- Mostrá nombre, apellido, título del film y días de atraso.
 
 -- Generá el reporte de performance por tienda, empleado y film del PDF (pág. 12): una fila por cada combinación válida (store, staff, film) con cantidad de alquileres y recaudación. Los nulos deben ser 0.
 
