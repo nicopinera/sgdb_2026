@@ -54,15 +54,10 @@ WHERE
 SELECT 
     r.rental_id,
     r.rental_date,
-    r.return_date,
-    r.staff_id,
-    c.store_id,
     c.first_name,
     c.last_name,
     c.email,
-    f.title,
-    f.description,
-    f.rating
+    f.title
 FROM
     rental r
         LEFT JOIN
@@ -241,29 +236,163 @@ GROUP BY f.film_id
 ORDER BY cantCopias DESC;
 
 -- 26. Listá todos los actores (nombre y apellido) junto con el título de cada película en la que participaron. Incluí actores que no tienen películas asignadas.
+SELECT 
+    a.first_name, a.last_name, f.title
+FROM
+    actor a
+        LEFT JOIN
+    film_actor fa ON a.actor_id = fa.actor_id
+        LEFT JOIN
+    film f ON f.film_id = fa.film_id;
 
 -- 27. Mostrá el nombre de cada película (film.title), la categoría a la que pertenece (category.name) y el nombre de la tienda (store_id) que tiene copias en inventario. 
 -- Ordená por categoría y luego por título.
+SELECT DISTINCT
+    f.title, c.name, s.store_id
+FROM
+    inventory i
+        JOIN
+    film f ON i.film_id = f.film_id
+        JOIN
+    store s ON s.store_id = i.store_id
+        JOIN
+    film_category fc ON fc.film_id = f.film_id
+        JOIN
+    category c ON c.category_id = fc.category_id
+ORDER BY fc.category_id , f.title;
 
--- 28. Listá todos los empleados (staff) con su nombre, apellido, dirección completa (address, city, country) y el nombre de la tienda donde trabajan. Usá LEFT JOINs en toda la cadena.
-
+-- 28. Listá todos los empleados (staff) con su nombre, apellido, dirección completa (address, city, country) y el nombre de la tienda donde trabajan. 
+-- Usá LEFT JOINs en toda la cadena.
+SELECT 
+    st.first_name, st.last_name, ad.address, ci.city, co.country
+FROM
+    staff st
+        LEFT JOIN
+    address ad ON st.address_id = ad.address_id
+        LEFT JOIN
+    city ci ON ci.city_id = ad.city_id
+        LEFT JOIN
+    country co ON co.country_id = ci.country_id;
+    
 -- 29. Mostrá todos los alquileres (rental) realizados incluyendo: fecha de alquiler, nombre del cliente, título de la película alquilada y nombre del empleado que lo gestionó. 
 -- Ordená por fecha de alquiler descendente.
+SELECT 
+    re.rental_id,
+    re.rental_date,
+    c.first_name,
+    f.title,
+    st.first_name
+FROM
+    rental re
+        JOIN
+    customer c ON re.customer_id = c.customer_id
+        JOIN
+    inventory i ON i.inventory_id = re.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+        JOIN
+    staff st ON st.staff_id = re.staff_id
+ORDER BY re.rental_date ASC;
 
 -- 30. Listá todas las películas que nunca fueron alquiladas (no tienen registros en inventory o sus copias jamás generaron un rental). Mostrá título y categoría. 
 -- Pista: pensá cómo el LEFT JOIN expone los NULLs
+SELECT 
+    f.title, ca.name
+FROM
+    film f
+        LEFT JOIN
+    inventory i ON f.film_id = i.film_id
+        LEFT JOIN
+    rental r ON r.inventory_id = i.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = f.film_id
+        JOIN
+    category ca ON ca.category_id = fc.category_id
+WHERE
+    r.rental_id IS NULL;
 
 -- 31. Para cada categoría de film, mostrá la cantidad de films que tiene y el promedio de duración (film.length). Ordená de mayor a menor por cantidad de films.
+SELECT 
+    c.name,
+    COUNT(DISTINCT f.film_id) AS cantPeliculas,
+    AVG(f.length) AS promDuracion
+FROM
+    category c
+        JOIN
+    film_category fc ON c.category_id = fc.category_id
+        JOIN
+    film f ON f.film_id = fc.film_id
+GROUP BY c.name
+ORDER BY c.name , cantPeliculas DESC;
 
--- 32. Mostrá los 5 actores que aparecen en más películas. Columnas: nombre, apellido, cantidad de films. Excluí actores con menos de 10 películas usando HAVING.
+-- 32. Mostrá los 5 actores que aparecen en más películas. Columnas: nombre, apellido, cantidad de films. Excluí actores con menos de 20 películas usando HAVING.
+SELECT 
+    a.first_name,
+    a.last_name,
+    COUNT(DISTINCT fa.film_id) AS cantPeliculas
+FROM
+    actor a
+        JOIN
+    film_actor fa ON a.actor_id = fa.actor_id
+GROUP BY a.actor_id
+HAVING cantPeliculas > 20
+ORDER BY cantPeliculas DESC
+LIMIT 5;
 
 -- 33. Para cada tienda (store_id), calculá el total recaudado por año (YEAR(payment_date)) y mes. Ordená por tienda, año y mes.
+SELECT 
+    st.store_id,
+    YEAR(p.payment_date),
+    MONTH(p.payment_date),
+    AVG(p.amount)
+FROM
+    store st
+        JOIN
+    staff sa ON sa.store_id = st.store_id
+        JOIN
+    payment p ON p.staff_id = sa.staff_id
+GROUP BY st.store_id , YEAR(payment_date) , MONTH(payment_date);
 
 -- 34. Listá los clientes que realizaron más de 30 alquileres en total. Mostrá nombre, apellido y cantidad de alquileres.
+SELECT 
+    c.first_name, c.last_name, COUNT(r.rental_id) AS cantRentas
+FROM
+    customer c
+        JOIN
+    rental r ON r.customer_id = c.customer_id
+GROUP BY c.customer_id
+HAVING cantRentas > 30;
 
 -- 35. Para cada empleado (staff), mostrá la cantidad de alquileres que gestionó y el monto total de pagos asociados a esos alquileres. Filtrá solo los del año 2005.
+SELECT 
+    st.first_name,
+    st.last_name,
+    COUNT(DISTINCT p.rental_id) AS cantVentas,
+    SUM(p.amount) AS cantRecaudada
+FROM
+    staff st
+        JOIN
+    payment p ON st.staff_id = p.staff_id
+WHERE
+    YEAR(p.payment_date) = 2005
+GROUP BY st.staff_id;
 
 -- 36. Mostrá las 3 películas más rentables (mayor SUM de payments). Columnas: título, categoría, total recaudado.
+SELECT 
+    f.title,
+    COUNT(DISTINCT r.rental_id) AS cantRentas,
+    SUM(p.amount) AS totalRecaudado
+FROM
+    film f
+        JOIN
+    inventory i ON f.film_id = i.film_id
+        JOIN
+    rental r ON r.inventory_id = i.inventory_id
+        JOIN
+    payment p ON p.rental_id = r.rental_id
+GROUP BY f.film_id
+ORDER BY cantRentas DESC
+LIMIT 3;
 
 -- ########################################################################################
 -- ########################################################################################
@@ -309,14 +438,80 @@ ORDER BY cantCopias DESC;
 -- ############################################################################################
 
 -- EJERCICIO 1.
--- Recupere de la base de datos un listado de todos las películas que tienen 
--- mas copias en el inventario que el promedio de las películas.
+-- Recupere de la base de datos un listado de todos las películas que tienen mas copias en el inventario que el promedio de las películas.
 -- De cada película en el listado deberá indicar:
 -- NOMBRE DE LA PELÍCULA
 -- CANTIDAD DE ACTORES QUE ACTÚAN
 -- CANTIDAD TOTAL DE ALQUILERES QUE SE REALIZARON DE ESA PELÍCULA
 -- CANTIDAD DE ALQUILERES NO DEVUELTOS DE ESA PELICULA
+SELECT 
+    f.title,
+    (SELECT 
+            COUNT(DISTINCT fa1.actor_id)
+        FROM
+            film_actor fa1
+        WHERE
+            fa1.film_id = f.film_id) AS cantActores,
+    (SELECT 
+            COUNT(r2.rental_id)
+        FROM
+            rental r2
+                JOIN
+            inventory i2 ON i2.inventory_id = r2.inventory_id
+        WHERE
+            i2.film_id = f.film_id) AS cantAlquileres,
+    (SELECT 
+            COUNT(r3.rental_id)
+        FROM
+            rental r3
+                JOIN
+            inventory i3 ON r3.inventory_id = i3.inventory_id
+        WHERE
+            i3.film_id = f.film_id
+                AND r3.return_date IS NULL) AS cantAlquileresNoDevueltos
+FROM
+    film f
+        JOIN
+    inventory i ON i.film_id = f.film_id
+GROUP BY f.film_id
+HAVING COUNT(i.inventory_id) >= (SELECT 
+        COUNT(i1.inventory_id) / COUNT(DISTINCT i1.film_id) AS promCopias
+    FROM
+        inventory i1);
 
+-- Promedio de copias por pelicula
+SELECT 
+    COUNT(i1.inventory_id) / COUNT(DISTINCT i1.film_id) AS promCopias
+FROM
+    inventory i1;
+
+-- Cantidad actores por pelicula
+SELECT 
+    COUNT(DISTINCT fa1.actor_id)
+FROM
+    film_actor fa1
+WHERE
+    fa1.film_id = 1;
+
+-- Cantidad total de alquileres de una pelicula
+SELECT 
+    COUNT(r2.rental_id)
+FROM
+    rental r2
+        JOIN
+    inventory i2 ON i2.inventory_id = r2.inventory_id
+WHERE
+    i2.film_id = 1;
+
+SELECT 
+    COUNT(r3.rental_id)
+FROM
+    rental r3
+        JOIN
+    inventory i3 ON r3.inventory_id = i3.inventory_id
+WHERE
+    i3.film_id = 3
+        AND r3.return_date IS NULL;
 
 -- ############################################################################################
 -- ############################################################################################
