@@ -850,11 +850,96 @@ WHERE
 
 -- Listá los clientes que tienen pagos pendientes: alquileres sin return_date donde la fecha de devolución esperada (rental_date + rental_duration) ya pasó. 
 -- Mostrá nombre, apellido, título del film y días de atraso.
+SELECT 
+    c.first_name,
+    c.last_name,
+    f.title,
+    DATEDIFF(NOW(), r.rental_date) AS diasRetraso
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film f ON f.film_id = i.film_id
+        JOIN
+    customer c ON c.customer_id = r.customer_id
+WHERE
+    return_date IS NULL
+        AND DATEDIFF(NOW(), r.rental_date) > f.rental_duration;
 
--- Generá el reporte de performance por tienda, empleado y film del PDF (pág. 12): una fila por cada combinación válida (store, staff, film) con cantidad de alquileres y recaudación. Los nulos deben ser 0.
+select r1.rental_date, datediff(now(),r1.rental_date) from rental r1 join inventory i1 on i1.inventory_id = r1.inventory_id join film f1 on f1.film_id = i1.film_id;
+
+-- Generá el reporte de performance por tienda, empleado y film: una fila por cada combinación válida (store, staff, film) con cantidad de alquileres y recaudación. 
+-- Los nulos deben ser 0.
+SELECT 
+    store.store_id,
+    st.first_name,
+    st.last_name,
+    f.film_id,
+    f.title,
+    COUNT(r.rental_id) as cantAlquileres,
+    SUM(p.amount) as totalRecaudado
+FROM
+    rental r
+        LEFT JOIN
+    payment p ON p.rental_id = r.rental_id
+        LEFT JOIN
+    staff st ON st.staff_id = r.staff_id
+        LEFT JOIN
+    store ON store.store_id = st.store_id
+        LEFT JOIN
+    inventory i ON r.inventory_id = i.inventory_id
+        LEFT JOIN
+    film f ON f.film_id = i.film_id
+GROUP BY store.store_id , st.staff_id , f.film_id;
 
 -- Seleccioná el/los film/s cuya recaudación es la máxima dentro de su categoría. Mostrá título, categoría y monto. Puede haber empates
+SELECT 
+    f.title, c.name, SUM(p.amount)
+FROM
+    film f
+        JOIN
+    film_category fc ON fc.film_id = f.film_id
+        JOIN
+    category c ON c.category_id = fc.category_id
+        JOIN
+    inventory i ON i.film_id = f.film_id
+        JOIN
+    rental r ON r.inventory_id = i.inventory_id
+        JOIN
+    payment p ON p.rental_id = r.rental_id
+GROUP BY c.name , f.film_id
+HAVING SUM(p.amount) >= ALL (SELECT 
+        SUM(p1.amount)
+    FROM
+        category c1
+            JOIN
+        film_category fc1 ON fc1.category_id = c1.category_id
+            JOIN
+        inventory i1 ON i1.film_id = fc1.film_id
+            JOIN
+        rental r1 ON r1.inventory_id = i1.inventory_id
+            JOIN
+        payment p1 ON p1.rental_id = r1.rental_id
+    WHERE
+        c1.name = c.name
+    GROUP BY fc1.film_id);
 
+SELECT 
+    SUM(p1.amount)
+FROM
+    category c1
+        JOIN
+    film_category fc1 ON fc1.category_id = c1.category_id
+        JOIN
+    inventory i1 ON i1.film_id = fc1.film_id
+        JOIN
+    rental r1 ON r1.inventory_id = i1.inventory_id
+        JOIN
+    payment p1 ON p1.rental_id = r1.rental_id
+WHERE
+    c1.name = 'Horror'
+GROUP BY fc1.film_id;
 
 -- ############################################################################################
 -- ############################################################################################
