@@ -40,7 +40,7 @@ FROM
         LEFT JOIN
     film f ON f.film_id = fi.film_id
 WHERE
-    fi.actor_id = 2;
+    fi.actor_id = 2
 
 -- 5. Mostrar la cantidad de Clientes activos
 SELECT 
@@ -48,7 +48,7 @@ SELECT
 FROM
     customer
 WHERE
-    active = 1;
+    active = 1
 
 -- 6. Mostrar todas los alquileres de películas realizados entre dos fechas determinadas
 SELECT 
@@ -67,7 +67,7 @@ FROM
         JOIN
     film f ON f.film_id = i.film_id
 WHERE
-    r.rental_date BETWEEN '2005-05-24' AND '2005-05-30';
+    r.rental_date BETWEEN '2005-05-24' AND '2005-05-30'
 
 -- 7. Mostrar la cantidad de alquileres de películas realizadas entre dos fechas determinadas
 SELECT 
@@ -75,7 +75,7 @@ SELECT
 FROM
     rental
 WHERE
-    rental_date BETWEEN '2005-05-24' AND '2005-05-25';
+    rental_date BETWEEN '2005-05-24' AND '2005-05-25'
 
 -- 8. Mostrar la lista de clientes ordenada alfabéticamente
 SELECT 
@@ -394,12 +394,7 @@ GROUP BY f.film_id
 ORDER BY cantRentas DESC
 LIMIT 3;
 
--- ########################################################################################
--- ########################################################################################
--- ########################################################################################
-
--- 1. ¿Cuál es la categoría que más alquileres tuvo entre dos fechas dadas, en cada país?
-SELECT 
+-- #######################################################################SELECT 
     ca.name, cou.country, COUNT(r.rental_id) AS cantRentas
 FROM
     rental r
@@ -420,9 +415,7 @@ FROM
 WHERE
     r.rental_date BETWEEN '2005-05-24' AND '2005-08-30'
 GROUP BY ca.name , cou.country
-ORDER BY cantRentas DESC;
-
--- 2. Mostrar el ranking por Categoría, de los alquileres realizados por clientes de "Brasil"
+ORDER BY cantRentas DESCtes de "Brasil"
 SELECT 
     ca.name, cou.country, COUNT(r.rental_id) AS cantRentas
 FROM
@@ -993,6 +986,9 @@ SELECT
 FROM
     inventory i1;
 
+select count(i2.inventory_id) as cantPeliculas from inventory i2 group by i2.film_id;
+select avg(aux1.cantPeliculas) from (select count(i2.inventory_id) as cantPeliculas from inventory i2 group by i2.film_id) as aux1;
+
 -- Cantidad actores por pelicula
 SELECT 
     COUNT(DISTINCT fa1.actor_id)
@@ -1030,6 +1026,57 @@ WHERE
 -- Nombre y apellido del actor
 -- Cuantos alquileres se realizaron de cada categoría por películas de cada actor,
 -- Se debe producir un registro para cada una de las combinaciones actor categoría (producto cartesiano)
+SELECT 
+    c.name,
+    a.first_name,
+    a.last_name,
+    (SELECT 
+            COUNT(*)
+        FROM
+            rental r
+                LEFT JOIN
+            inventory i ON i.inventory_id = r.inventory_id
+                LEFT JOIN
+            film_category fc ON fc.film_id = i.film_id
+                LEFT JOIN
+            film_actor fa ON fa.film_id = fc.film_id
+        WHERE
+            fa.actor_id = a.actor_id
+                AND fc.category_id = c.category_id) AS cantAlquileres
+FROM
+    actor AS a,
+    category AS c;
+
+SELECT 
+    COUNT(*)
+FROM
+    rental r
+        JOIN
+    inventory i ON i.inventory_id = r.inventory_id
+        JOIN
+    film_category fc ON fc.film_id = i.inventory_id
+        JOIN
+    film_actor fa ON fa.film_id = fc.film_id
+WHERE
+    fa.actor_id = 1 AND fc.category_id =3;
+
+--
+
+SELECT 
+    c.name, a.first_name, a.last_name, aux.cant
+FROM
+    actor AS a
+        JOIN
+    (SELECT 
+        fa.actor_id, fc.category_id, COUNT(*) AS cant
+    FROM
+        rental r
+    JOIN inventory i ON i.inventory_id = r.inventory_id
+    JOIN film_category fc ON fc.film_id = i.film_id
+    JOIN film_actor fa ON fa.film_id = fc.film_id
+    GROUP BY fa.actor_id , fc.category_id) AS aux ON aux.actor_id = a.actor_id
+        JOIN
+    category c ON c.category_id = aux.category_id;
 
 -- ############################################################################################
 -- ############################################################################################
@@ -1044,6 +1091,130 @@ WHERE
 -- Solo mostrar los clientes que tengan al menos un alquiler no devuelto
 -- Ordenar por monto total decendente
 
+SELECT 
+    c.last_name,
+    c.first_name,
+    (SELECT 
+            SUM(p1.amount)
+        FROM
+            payment p1
+        WHERE
+            p1.customer_id = c.customer_id) AS montoTotal,
+    aux2.anio2,
+    aux2.mes2,
+    (SELECT 
+            COUNT(*)
+        FROM
+            rental r4
+        WHERE
+            r4.customer_id = c.customer_id
+                AND MONTH(r4.rental_date) = aux2.mes2
+                AND YEAR(r4.rental_date) = aux2.anio2) AS cantAlquileres
+FROM
+    customer c
+        JOIN
+    (SELECT 
+        aux1.customer_id, aux1.anio AS anio2, aux1.mes AS mes2
+    FROM
+        (SELECT 
+        r.customer_id,
+            YEAR(r.rental_date) AS anio,
+            MONTH(r.rental_date) AS mes,
+            SUM(p.amount) AS total_mes
+    FROM
+        payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.customer_id , YEAR(r.rental_date) , MONTH(r.rental_date)) aux1
+    JOIN (SELECT 
+        customer_id, MAX(total_mes) AS max_pago
+    FROM
+        (SELECT 
+        r.customer_id,
+            YEAR(r.rental_date) AS anio,
+            MONTH(r.rental_date) AS mes,
+            SUM(p.amount) AS total_mes
+    FROM
+        payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.customer_id , YEAR(r.rental_date) , MONTH(r.rental_date)) aux1_copia
+    GROUP BY customer_id) maximos ON maximos.customer_id = aux1.customer_id
+        AND maximos.max_pago = aux1.total_mes) aux2 ON aux2.customer_id = c.customer_id
+WHERE
+    c.customer_id IN (SELECT DISTINCT
+            r5.customer_id
+        FROM
+            rental r5
+        WHERE
+            r5.return_date IS NULL)
+ORDER BY montoTotal DESC;
+
+select distinct r5.customer_id from rental r5 where r5.return_date is null;
+
+-- mes y año con mayor pago por customer
+SELECT 
+    r.customer_id,
+    YEAR(r.rental_date) as anio,
+    MONTH(r.rental_date) as mes,
+    SUM(p.amount) as total_mes
+FROM
+    payment p
+        JOIN
+    rental r ON p.rental_id = r.rental_id
+GROUP BY r.customer_id,YEAR(r.rental_date) , MONTH(r.rental_date);
+
+-- Maximo por cliente
+SELECT 
+    customer_id, MAX(total_mes) AS max_pago
+FROM
+    (SELECT 
+        r.customer_id,
+            YEAR(r.rental_date) AS anio,
+            MONTH(r.rental_date) AS mes,
+            SUM(p.amount) AS total_mes
+    FROM
+        payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.customer_id , YEAR(r.rental_date) , MONTH(r.rental_date)) aux1_copia
+GROUP BY customer_id;
+
+-- union de la primera con la segunda
+SELECT 
+    aux1.customer_id, aux1.anio AS anio1, aux1.mes AS mes1
+FROM
+    (SELECT 
+        r.customer_id,
+            YEAR(r.rental_date) AS anio,
+            MONTH(r.rental_date) AS mes,
+            SUM(p.amount) AS total_mes
+    FROM
+        payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.customer_id , YEAR(r.rental_date) , MONTH(r.rental_date)) aux1
+        JOIN
+    (SELECT 
+        customer_id, MAX(total_mes) AS max_pago
+    FROM
+        (SELECT 
+        r.customer_id,
+            YEAR(r.rental_date) AS anio,
+            MONTH(r.rental_date) AS mes,
+            SUM(p.amount) AS total_mes
+    FROM
+        payment p
+    JOIN rental r ON p.rental_id = r.rental_id
+    GROUP BY r.customer_id , YEAR(r.rental_date) , MONTH(r.rental_date)) aux1_copia
+    GROUP BY customer_id) maximos ON maximos.customer_id = aux1.customer_id
+        AND maximos.max_pago = aux1.total_mes;
+
+-- cantidad de alquileres realizados por un determinado cliente, en un mes y anio
+SELECT 
+    COUNT(*)
+FROM
+    rental r4
+WHERE
+    r4.customer_id = 2
+        AND MONTH(r4.rental_date) = 5
+        AND YEAR(r4.rental_date) = 2005;
 
 -- ############################################################################################
 -- ############################################################################################
@@ -1054,11 +1225,112 @@ WHERE
 -- cuenta los actores que no tienen recaudacion.
 -- De cada actor en el listado deberá indicar: 
 -- NOMBRE y APELLIDO
--- CANTIDAD DE PELÍCULAS QUE ACTUÓ
+-- CANTIDAD DE PELÍCULAS QUE ACTUÓ 
 -- CANTIDAD DE ALQUILERES NO DEVUELTOS DE ESE ACTOR
 -- PROMEDIO DE RECUDACION DE TODOS LOS ACTORES (esta columna tendrá el mismo valor en todas las filas)
 -- El estado de los datos de ejemplo es uno de los posibles estados, la consulta debe funcionar correctamente cualquiera sean los datos.
 
+SELECT 
+    a.first_name,
+    a.last_name,
+    (SELECT 
+            COUNT(*)
+        FROM
+            film_actor
+        WHERE
+            actor_id = a.actor_id) AS cantPeliculasActuados,
+    SUM(p.amount) AS montoTotal,
+    (SELECT 
+            COUNT(*)
+        FROM
+            rental r2
+                JOIN
+            inventory i2 ON i2.inventory_id = r2.inventory_id
+                JOIN
+            film_actor fa2 ON fa2.film_id = i2.film_id
+        WHERE
+            fa2.actor_id = a.actor_id
+                AND r2.return_date IS NULL) AS cantNoDevueltos,
+    (SELECT 
+            AVG(aux1.totalRecaudado)
+        FROM
+            (SELECT 
+                SUM(p1.amount) AS totalRecaudado
+            FROM
+                payment p1
+            JOIN rental r1 ON p1.rental_id = r1.rental_id
+            JOIN inventory i1 ON i1.inventory_id = r1.inventory_id
+            JOIN film_actor fa ON fa.film_id = i1.film_id
+            GROUP BY fa.actor_id) aux1) promRecaudacionActor
+FROM
+    actor a
+        JOIN
+    film_actor fa ON fa.actor_id = a.actor_id
+        JOIN
+    inventory i ON i.film_id = fa.film_id
+        JOIN
+    rental r ON r.inventory_id = i.inventory_id
+        JOIN
+    payment p ON p.rental_id = r.rental_id
+GROUP BY a.actor_id
+HAVING montoTotal > (SELECT 
+        AVG(aux1.totalRecaudado)
+    FROM
+        (SELECT 
+            SUM(p1.amount) AS totalRecaudado
+        FROM
+            payment p1
+        JOIN rental r1 ON p1.rental_id = r1.rental_id
+        JOIN inventory i1 ON i1.inventory_id = r1.inventory_id
+        JOIN film_actor fa ON fa.film_id = i1.film_id
+        GROUP BY fa.actor_id) aux1);
+
+-- cantidad de peliculas en las que actuo un actor
+SELECT 
+    COUNT(*)
+FROM
+    film_actor
+WHERE
+    actor_id = 1;
+
+-- cantidad alquileres no devueltos
+SELECT 
+    COUNT(*)
+FROM
+    rental r2
+        JOIN
+    inventory i2 ON i2.inventory_id = r2.inventory_id
+        JOIN
+    film_actor fa2 ON fa2.film_id = i2.film_id
+WHERE
+    fa2.actor_id = 1
+        AND r2.return_date IS NULL;
+
+-- Suma de lo que recaudo cada actor
+SELECT 
+    SUM(p1.amount) AS totalRecaudado
+FROM
+    payment p1
+        JOIN
+    rental r1 ON p1.rental_id = r1.rental_id
+        JOIN
+    inventory i1 ON i1.inventory_id = r1.inventory_id
+        JOIN
+    film_actor fa ON fa.film_id = i1.film_id
+GROUP BY fa.actor_id;
+
+-- Promedio recaudado
+SELECT 
+    AVG(aux1.totalRecaudado)
+FROM
+    (SELECT 
+        SUM(p1.amount) AS totalRecaudado
+    FROM
+        payment p1
+    JOIN rental r1 ON p1.rental_id = r1.rental_id
+    JOIN inventory i1 ON i1.inventory_id = r1.inventory_id
+    JOIN film_actor fa ON fa.film_id = i1.film_id
+    GROUP BY fa.actor_id) aux1;
 
 -- ############################################################################################
 -- ############################################################################################
@@ -1066,14 +1338,120 @@ WHERE
 -- EJERCICIO 5.
 -- Recupere la actuación de los clientes generando un listado de los clientes por la cantidad de alquileres realizados, 
 -- cada renglón del listado deberá contener lo siguiente:
--- Apellido del cliente
--- Nombre del cliente
--- Cantidad total de alquileres realizados
+-- Apellido del cliente ok 
+-- Nombre del cliente ok 
+-- Cantidad total de alquileres realizados ok 
 -- Mes y año en el que ese cliente realizó más alquileres, si hay mas de uno mayor mostrar uno solo.
 -- Cantidad de alquileres que realizó en ese mes y año
--- Solo mostrar los clientes que no tengan alquileres no devueltos. Ordenar por apellido y nombre.
+-- Solo mostrar los clientes que no tengan alquileres no devueltos. Ordenar por apellido y nombre. ok
 -- APELLIDOCLIENTE NOMBRECLIENTE CANTTOTAL MESMAYOR ANOMAYOR CANTIDAD
+SELECT 
+    c.last_name AS APELLIDOCLIENTE,
+    c.first_name AS NOMBRECLIENTE,
+    COUNT(DISTINCT r.rental_id) AS CANTTOTAL,
+    maximasRentas.mesMAX AS MESMAYOR,
+    maximasRentas.anioMAX AS ANOMAYOR,
+    maximasRentas.cantRentasMax AS CANTIDAD
+FROM
+    customer c
+        JOIN
+    rental r ON r.customer_id = c.customer_id
+        JOIN
+    (SELECT 
+        aux1.cliente AS idCliente,
+            aux1.anio AS anioMAX,
+            aux1.mes AS mesMAX,
+            aux1.cantRentas AS cantRentasMax
+    FROM
+        (SELECT 
+        r2.customer_id AS cliente,
+            YEAR(r2.rental_date) AS anio,
+            MONTH(r2.rental_date) AS mes,
+            COUNT(*) AS cantRentas
+    FROM
+        rental r2
+    GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date)) aux1
+    JOIN (SELECT 
+        aux1.customer_id AS cliente,
+            MAX(aux1.cantRentas1) AS maxRentas
+    FROM
+        (SELECT 
+        r2.customer_id,
+            YEAR(r2.rental_date),
+            MONTH(r2.rental_date),
+            COUNT(*) AS cantRentas1
+    FROM
+        rental r2
+    GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date)) AS aux1
+    GROUP BY aux1.customer_id) aux2 ON aux1.cliente = aux2.cliente
+        AND aux1.cantRentas = aux2.maxRentas) maximasRentas ON maximasRentas.idCliente = c.customer_id
+WHERE
+    c.customer_id NOT IN (SELECT DISTINCT
+            r1.customer_id
+        FROM
+            rental r1
+        WHERE
+            r1.return_date IS NULL)
+GROUP BY c.customer_id , maximasRentas.mesMAX , maximasRentas.anioMAX , maximasRentas.cantRentasMax
+ORDER BY c.last_name , c.first_name;
 
+-- id clientes que tienen rentas pendientes
+select distinct r1.customer_id from rental r1 where r1.return_date is null;
+
+-- Obtengo cantidad de rentas por año - mes de un cliente
+SELECT 
+    r2.customer_id,
+    YEAR(r2.rental_date),
+    MONTH(r2.rental_date),
+    COUNT(*)
+FROM
+    rental r2
+GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date);
+
+-- Obtengo el maximo de rentas para un año y mes de un cliente
+SELECT 
+    aux1.customer_id, MAX(aux1.cantRentas1)
+FROM
+    (SELECT 
+        r2.customer_id,
+            YEAR(r2.rental_date),
+            MONTH(r2.rental_date),
+            COUNT(*) AS cantRentas1
+    FROM
+        rental r2
+    GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date)) AS aux1
+GROUP BY aux1.customer_id;
+
+-- obtengo anio, mes para la cantida maxima.
+SELECT 
+    aux1.cliente AS idCliente,
+    aux1.anio AS anioMAX,
+    aux1.mes AS mesMAX,
+    aux1.cantRentas AS cantRentasMax
+FROM
+    (SELECT 
+        r2.customer_id AS cliente,
+            YEAR(r2.rental_date) AS anio,
+            MONTH(r2.rental_date) AS mes,
+            COUNT(*) AS cantRentas
+    FROM
+        rental r2
+    GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date)) aux1
+        JOIN
+    (SELECT 
+        aux1.customer_id AS cliente,
+            MAX(aux1.cantRentas1) AS maxRentas
+    FROM
+        (SELECT 
+        r2.customer_id,
+            YEAR(r2.rental_date),
+            MONTH(r2.rental_date),
+            COUNT(*) AS cantRentas1
+    FROM
+        rental r2
+    GROUP BY r2.customer_id , YEAR(r2.rental_date) , MONTH(r2.rental_date)) AS aux1
+    GROUP BY aux1.customer_id) aux2 ON aux1.cliente = aux2.cliente
+        AND aux1.cantRentas = aux2.maxRentas;
 
 -- ############################################################################################
 -- ############################################################################################
@@ -1132,3 +1510,20 @@ WHERE
 
 -- Apparently everything OK (i compared it with the file that Bada sent me: 'examenFinal'.
 -- Bada's file isn't ordered by total earnings,careful)
+
+-- ############################################################################################
+-- ############################################################################################
+-- ############################################################################################
+
+#Genere una consulta SQL sobre la base Sakila que retorne una tabla 
+#de 4 columnas que tenga 1 registro por cada "actor" con los campos:
+#. Apellido del Actor
+#. Cantidad de films que superaron la recaudación promedio 
+#de todos los films de la base de datos - Usar el campo amount de la tabla payment.
+#. Cantidad de categorías distintas de los films del actor.
+#. Cantidad total de alquileres de films en los que participó.
+#El estado de los datos es uno de los posibles de la Base de Datos,
+# la consulta debe funcionar cuelquiera sea el estado.
+
+#. Cantidad de films que superaron la recaudación promedio 
+#de todos los films de la base de datos - Usar el campo amount de la tabla payment.
